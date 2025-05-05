@@ -5,7 +5,6 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { Session } from "next-auth"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 
 interface AuthContextType {
   session: Session | null
@@ -22,7 +21,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { data: session, status } = useSession()
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
     if (status !== "loading") {

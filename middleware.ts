@@ -9,6 +9,11 @@ export async function middleware(request: NextRequest) {
   // Get the pathname from the URL
   const path = request.nextUrl.pathname
 
+  // Skip middleware for not-found and error pages
+  if (path.startsWith("/_next") || path === "/404" || path === "/500") {
+    return NextResponse.next()
+  }
+
   // Redirect rules
   if (!isAuthenticated && path !== "/signin" && path !== "/api/auth/signin") {
     return NextResponse.redirect(new URL("/signin", request.url))
