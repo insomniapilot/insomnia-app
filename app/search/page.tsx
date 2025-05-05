@@ -1,6 +1,9 @@
 import Navbar from "@/components/navbar"
 import SearchUsers from "@/components/search-users"
 
+// Disable static generation for this page
+export const dynamic = "force-dynamic"
+
 export default function SearchPage() {
   return (
     <>
