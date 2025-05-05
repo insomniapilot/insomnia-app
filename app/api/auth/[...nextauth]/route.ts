@@ -11,51 +11,68 @@ const handler = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email) {
+      console.log("Sign in attempt:", user.email)
+
+      if (account?.provider === "google") {
         const supabase = createServerSupabaseClient()
 
-        // Cek user di tabel `users`
+        // Cek user berdasarkan email
         const { data: existingUser, error } = await supabase
           .from("users")
-          .select("id")
+          .select("*")
           .eq("email", user.email)
           .single()
 
+        if (error && error.code !== "PGRST116") {
+          console.error("Supabase error saat cek user:", error)
+          return false
+        }
+
+        // Kalau user belum ada, create di table "users"
         if (!existingUser) {
-          // Simpen user baru ke tabel
-          const { error: insertError } = await supabase.from("users").insert({
-            email: user.email,
-            full_name: user.name,
-            avatar_url: user.image,
-          })
+          const { error: insertError } = await supabase
+            .from("users")
+            .insert({
+              email: user.email,
+              full_name: user.name,
+              avatar_url: user.image,
+              created_at: new Date().toISOString(),
+            })
 
           if (insertError) {
-            console.error("❌ Gagal insert user:", insertError)
-            return false // << bikin AccessDenied kalo ini error
+            console.error("Gagal insert user:", insertError)
+            return false
           }
+
+          console.log("User baru berhasil dibuat!")
         }
       }
 
       return true
     },
+
     async session({ session, token }) {
       if (token.sub && session.user) {
         session.user.id = token.sub
       }
       return session
     },
+
     async jwt({ token, user }) {
       if (user) {
-        token.username = (user as any).username
+        token.name = user.name
+        token.email = user.email
       }
       return token
     },
   },
   pages: {
     signIn: "/signin",
-    error: "/signin", // Bisa lo ubah ke error page khusus
+    error: "/signin",
   },
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+  },
   secret: process.env.NEXTAUTH_SECRET,
 })
 
