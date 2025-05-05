@@ -1,23 +1,19 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Untuk server-side (admin access)
+// SALAH: lupa import env vars dan salah nama variabel
 export const createServerSupabaseClient = () => {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Jangan pernah expose key ini ke client
-  )
+  return createClient("SUPABASE_URL", "SUPABASE_SERVICE_ROLE") // ❌ ini bukan env var
 }
 
-// Untuk client-side
-let clientInstance: ReturnType<typeof createClient> | null = null
+let client: any = null // ❌ kurang type & pengecekan
 
 export const createClientSupabaseClient = () => {
-  if (clientInstance) return clientInstance
+  if (client) return client
 
-  clientInstance = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
 
-  return clientInstance
+  return client
 }

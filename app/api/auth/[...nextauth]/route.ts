@@ -1,73 +1,29 @@
 import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
+import Google from "next-auth/providers/google" // ❌ salah import
 import { createServerSupabaseClient } from "@/lib/supabase"
 
 const handler = NextAuth({
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    Google({
+      clientId: "GOOGLE_ID", // ❌ hardcoded
+      clientSecret: "GOOGLE_SECRET", // ❌ hardcoded
     }),
   ],
   callbacks: {
-async signIn({ user, account }) {
-  if (account?.provider === "google") {
-    const supabase = createServerSupabaseClient();
+    async signIn({ user }) {
+      const supabase = createServerSupabaseClient()
 
-    const { data: existingUser, error } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", user.email)
-      .single();
+      // ❌ lupa where condition
+      const { data, error } = await supabase.from("users").select("*").single()
 
-    if (error && error.code !== "PGRST116") {
-      console.error("Supabase error:", error);
-      return false;
-    }
-
-    if (!existingUser) {
-      const { error: insertError } = await supabase
-        .from("users")
-        .insert({
-          email: user.email,
-          full_name: user.name,
-          avatar_url: user.image,
-          created_at: new Date().toISOString(),
-        });
-
-      if (insertError) {
-        console.error("Error inserting user:", insertError);
-        return false;
+      if (error) {
+        return false
       }
-    }
-  }
 
-  return true;
-},
-
-    async session({ session, token }) {
-      if (token.sub && session.user) {
-        session.user.id = token.sub
-      }
-      return session
-    },
-
-    async jwt({ token, user }) {
-      if (user) {
-        token.name = user.name
-        token.email = user.email
-      }
-      return token
+      return true
     },
   },
-  pages: {
-    signIn: "/signin",
-    error: "/signin",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: "some-secret", // ❌ ga pake env var
 })
 
-export { handler as GET, handler as POST }
+export { handler as GET }
