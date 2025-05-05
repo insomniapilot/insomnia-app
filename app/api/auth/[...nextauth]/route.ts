@@ -3,24 +3,16 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { createServerSupabaseClient } from "@/lib/supabase"
 
-// Pastikan environment variables tersedia
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  console.error("Missing Google OAuth credentials")
-}
-
-if (!process.env.NEXTAUTH_URL) {
-  console.warn("NEXTAUTH_URL not set")
-}
-
-if (!process.env.NEXTAUTH_SECRET) {
-  console.error("NEXTAUTH_SECRET is not set")
-}
+// Untuk debugging
+console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL)
+console.log("GOOGLE_CLIENT_ID exists:", !!process.env.GOOGLE_CLIENT_ID)
+console.log("GOOGLE_CLIENT_SECRET exists:", !!process.env.GOOGLE_CLIENT_SECRET)
 
 const handler = NextAuth({
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -67,20 +59,17 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Log untuk debugging
-      console.log("Sign in callback:", {
-        userId: user.id,
-        provider: account?.provider,
-        hasEmail: !!user.email,
-      })
-
+    async signIn({ user, account }) {
       if (account?.provider === "google") {
         const supabase = createServerSupabaseClient()
 
         try {
           // Check if user exists in our database
-          const { data: existingUser, error } = await supabase.from("users").select("*").eq("id", user.id).single()
+          const { data: existingUser, error } = await supabase
+            .from("users")
+            .select("*")
+            .eq("email", user.email)
+            .single()
 
           if (error && error.code !== "PGRST116") {
             console.error("Error checking user:", error)
@@ -88,28 +77,27 @@ const handler = NextAuth({
           }
 
           if (!existingUser && user.email) {
-            console.log("Creating new user in Supabase")
-            // Create auth user in Supabase
-            const { data, error: createError } = await supabase.auth.admin.createUser({
-              email: user.email,
-              email_confirm: true,
-              user_metadata: {
+            // Create user in our database
+            const { error: insertError } = await supabase.from("users").insert([
+              {
+                id: user.id,
+                email: user.email,
                 full_name: user.name,
                 avatar_url: user.image,
+                username: user.email?.split("@")[0] || `user_${Date.now()}`,
               },
-              id: user.id as string,
-            })
+            ])
 
-            if (createError) {
-              console.error("Error creating user in Supabase:", createError)
+            if (insertError) {
+              console.error("Error creating user:", insertError)
               return false
             }
 
-            console.log("User created successfully, redirecting to complete profile")
+            // Redirect to complete profile page for first-time users
             return "/complete-profile"
           }
         } catch (error) {
-          console.error("Unexpected error in signIn callback:", error)
+          console.error("Error in signIn callback:", error)
           return false
         }
       }
@@ -134,12 +122,11 @@ const handler = NextAuth({
     signIn: "/signin",
     error: "/signin",
   },
-  debug: true, // Enable debug mode to see detailed errors
   session: {
     strategy: "jwt",
   },
-  // Tambahkan secret dari environment variable
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
 })
 
 export { handler as GET, handler as POST }
