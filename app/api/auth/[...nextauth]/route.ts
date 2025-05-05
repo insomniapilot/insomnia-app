@@ -3,6 +3,10 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { createServerSupabaseClient } from "@/lib/supabase"
 
+// Untuk debugging
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID)
+console.log("GOOGLE_CLIENT_SECRET length:", process.env.GOOGLE_CLIENT_SECRET?.length)
+
 const handler = NextAuth({
   providers: [
     GoogleProvider({
@@ -96,9 +100,9 @@ const handler = NextAuth({
   },
   pages: {
     signIn: "/signin",
-    error: "/signin", // Add this line to redirect errors to signin page
+    error: "/signin",
   },
-  debug: process.env.NODE_ENV === "development", // Add debug mode for development
+  debug: true, // Enable debug mode to see detailed errors
   session: {
     strategy: "jwt",
   },

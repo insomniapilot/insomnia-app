@@ -2,43 +2,49 @@
 
 import { signIn } from "next-auth/react"
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
     // Check for error in URL
     const errorMessage = searchParams.get("error")
     if (errorMessage) {
+      console.log("Auth error:", errorMessage)
       switch (errorMessage) {
         case "OAuthCallback":
-          setError("There was a problem with the Google sign-in. Please try again.")
+          setError("Ada masalah dengan Google sign-in. Silakan coba lagi.")
           break
         case "OAuthSignin":
-          setError("Could not initiate Google sign-in. Please try again.")
+          setError("Tidak dapat memulai Google sign-in. Silakan coba lagi.")
           break
         case "Configuration":
-          setError("There is a server configuration issue. Please contact support.")
+          setError("Ada masalah konfigurasi server. Silakan hubungi support.")
           break
         default:
-          setError(`Authentication error: ${errorMessage}`)
+          setError(`Error autentikasi: ${errorMessage}`)
       }
     }
   }, [searchParams])
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    setError(null)
-
     try {
-      await signIn("google", { callbackUrl: "/home" })
+      setIsLoading(true)
+      setError(null)
+      console.log("Starting Google sign-in...")
+
+      // Tambahkan parameter untuk debugging
+      await signIn("google", {
+        callbackUrl: "/home",
+        redirect: true,
+      })
     } catch (err) {
       console.error("Sign-in error:", err)
-      setError("Failed to sign in. Please try again.")
+      setError("Gagal sign in. Silakan coba lagi.")
+    } finally {
       setIsLoading(false)
     }
   }
