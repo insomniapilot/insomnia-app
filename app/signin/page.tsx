@@ -1,16 +1,46 @@
 "use client"
 
 import { signIn } from "next-auth/react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Check for error in URL
+    const errorMessage = searchParams.get("error")
+    if (errorMessage) {
+      switch (errorMessage) {
+        case "OAuthCallback":
+          setError("There was a problem with the Google sign-in. Please try again.")
+          break
+        case "OAuthSignin":
+          setError("Could not initiate Google sign-in. Please try again.")
+          break
+        case "Configuration":
+          setError("There is a server configuration issue. Please contact support.")
+          break
+        default:
+          setError(`Authentication error: ${errorMessage}`)
+      }
+    }
+  }, [searchParams])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await signIn("google", { callbackUrl: "/home" })
+    setError(null)
+
+    try {
+      await signIn("google", { callbackUrl: "/home" })
+    } catch (err) {
+      console.error("Sign-in error:", err)
+      setError("Failed to sign in. Please try again.")
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -20,6 +50,16 @@ export default function SignIn() {
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">SocialApp</h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Connect with friends and the world around you</p>
         </div>
+
+        {error && (
+          <div
+            className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded relative"
+            role="alert"
+          >
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+
         <div className="mt-8 space-y-6">
           <div className="rounded-md shadow-sm">
             <button

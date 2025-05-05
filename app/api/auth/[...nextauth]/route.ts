@@ -96,7 +96,9 @@ const handler = NextAuth({
   },
   pages: {
     signIn: "/signin",
+    error: "/signin", // Add this line to redirect errors to signin page
   },
+  debug: process.env.NODE_ENV === "development", // Add debug mode for development
   session: {
     strategy: "jwt",
   },
