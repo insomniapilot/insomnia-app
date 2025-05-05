@@ -22,7 +22,9 @@ export default function SignIn() {
           setError("Tidak dapat memulai Google sign-in. Silakan coba lagi.")
           break
         case "Configuration":
-          setError("Ada masalah konfigurasi server. Silakan hubungi support.")
+          setError(
+            "Ada masalah konfigurasi server. Pastikan NEXTAUTH_URL dan NEXTAUTH_SECRET sudah diatur dengan benar.",
+          )
           break
         default:
           setError(`Error autentikasi: ${errorMessage}`)
