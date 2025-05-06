@@ -2,8 +2,11 @@
 
 import { useState, type FormEvent, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/contexts/auth-context"
 import { createClientSupabaseClient } from "@/lib/supabase"
+
+// Tambahkan export dynamic untuk mencegah prerendering
+export const dynamic = "force-dynamic"
 
 export default function CompleteProfile() {
   const [username, setUsername] = useState("")
@@ -11,14 +14,14 @@ export default function CompleteProfile() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { data: session, update } = useSession()
+  const { user } = useAuth()
 
   useEffect(() => {
     // Redirect jika user sudah memiliki username yang valid
-    if (session?.user?.username && !session.user.username.startsWith("user_")) {
+    if (user?.username && !user.username.startsWith("user_")) {
       router.push("/home")
     }
-  }, [session, router])
+  }, [user, router])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -61,12 +64,12 @@ export default function CompleteProfile() {
       }
 
       // Update user in Supabase Auth with email/password
-      if (session?.user?.email) {
+      if (user?.email) {
         // Cari user ID berdasarkan email
         const { data: userData, error: userError } = await supabase
           .from("users")
           .select("id")
-          .eq("email", session.user.email)
+          .eq("email", user.email)
           .single()
 
         if (userError || !userData) {
@@ -93,15 +96,6 @@ export default function CompleteProfile() {
         if (updateError) {
           throw new Error(updateError.message)
         }
-
-        // Update session dengan username baru
-        await update({
-          ...session,
-          user: {
-            ...session.user,
-            username,
-          },
-        })
 
         // Redirect to home page
         router.push("/home")

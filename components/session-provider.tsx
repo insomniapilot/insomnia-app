@@ -21,7 +21,7 @@ interface SessionContextType {
   update: (data: any) => Promise<void>
 }
 
-// Buat context
+// Buat context dengan nilai default yang valid
 const SessionContext = createContext<SessionContextType>({
   data: null,
   status: "unauthenticated",

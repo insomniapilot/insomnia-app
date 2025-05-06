@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 
+// Tambahkan export dynamic untuk mencegah prerendering
+export const dynamic = "force-dynamic"
+
 export default function Register() {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
