@@ -26,6 +26,11 @@ export default function SignIn() {
             "Ada masalah konfigurasi server. Pastikan NEXTAUTH_URL dan NEXTAUTH_SECRET sudah diatur dengan benar.",
           )
           break
+        case "AccessDenied":
+          setError(
+            "Akses ditolak. Pastikan Anda mengizinkan aplikasi untuk mengakses data Google Anda atau coba dengan akun Google lain.",
+          )
+          break
         default:
           setError(`Error autentikasi: ${errorMessage}`)
       }

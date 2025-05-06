@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState, type FormEvent, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { createClientSupabaseClient } from "@/lib/supabase"
@@ -12,6 +12,13 @@ export default function CompleteProfile() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { data: session, update } = useSession()
+
+  useEffect(() => {
+    // Redirect jika user sudah memiliki username yang valid
+    if (session?.user?.username && !session.user.username.startsWith("user_")) {
+      router.push("/home")
+    }
+  }, [session, router])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -30,6 +37,13 @@ export default function CompleteProfile() {
       return
     }
 
+    // Validasi username (hanya huruf, angka, dan underscore)
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setError("Username can only contain letters, numbers, and underscores")
+      setIsLoading(false)
+      return
+    }
+
     try {
       const supabase = createClientSupabaseClient()
 
@@ -38,7 +52,7 @@ export default function CompleteProfile() {
         .from("users")
         .select("username")
         .eq("username", username)
-        .single()
+        .maybeSingle()
 
       if (existingUser) {
         setError("Username is already taken")
@@ -46,8 +60,20 @@ export default function CompleteProfile() {
         return
       }
 
-      // Create user in Supabase Auth with email/password
+      // Update user in Supabase Auth with email/password
       if (session?.user?.email) {
+        // Cari user ID berdasarkan email
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("email", session.user.email)
+          .single()
+
+        if (userError || !userData) {
+          throw new Error("User not found")
+        }
+
+        // Update password di Supabase Auth
         const { error: authError } = await supabase.auth.updateUser({
           password: password,
         })
@@ -56,20 +82,19 @@ export default function CompleteProfile() {
           throw new Error(authError.message)
         }
 
-        // Create user in our users table
-        const { error: insertError } = await supabase.from("users").insert({
-          id: session.user.id,
-          username,
-          email: session.user.email,
-          full_name: session.user.name,
-          avatar_url: session.user.image,
-        })
+        // Update username di tabel users
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            username: username,
+          })
+          .eq("id", userData.id)
 
-        if (insertError) {
-          throw new Error(insertError.message)
+        if (updateError) {
+          throw new Error(updateError.message)
         }
 
-        // Update session with username
+        // Update session dengan username baru
         await update({
           ...session,
           user: {

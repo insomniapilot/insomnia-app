@@ -5,10 +5,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  if (typeof window === "undefined") {
-    console.error("Missing Supabase environment variables")
-  }
+// Untuk debugging
+if (typeof window === "undefined") {
+  console.log("Supabase URL exists:", !!supabaseUrl)
+  console.log("Supabase Anon Key exists:", !!supabaseAnonKey)
+  console.log("Supabase Service Role Key exists:", !!supabaseServiceRoleKey)
 }
 
 // Create a single supabase client for server-side usage
@@ -17,7 +18,12 @@ export const createServerSupabaseClient = () => {
     throw new Error("Missing Supabase environment variables")
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey)
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
 }
 
 // Create a client with admin privileges for server operations that need it
@@ -26,7 +32,12 @@ export const createServerSupabaseAdminClient = () => {
     throw new Error("Missing Supabase admin environment variables")
   }
 
-  return createClient(supabaseUrl, supabaseServiceRoleKey)
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
 }
 
 // Create a singleton instance for client-side usage
