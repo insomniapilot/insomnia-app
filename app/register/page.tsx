@@ -108,6 +108,7 @@ export default function Register() {
         router.push("/signin")
       }, 2000)
     } catch (err: any) {
+      console.error("Registration error:", err)
       setError(err.message || "Terjadi kesalahan saat registrasi")
     } finally {
       setIsLoading(false)

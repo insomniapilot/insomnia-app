@@ -183,7 +183,7 @@ const handler = NextAuth({
     signIn: "/signin",
     error: "/signin",
   },
-  debug: true, // Enable debug mode to see detailed errors
+  debug: process.env.NODE_ENV === "development", // Enable debug mode in development
   session: {
     strategy: "jwt",
   },

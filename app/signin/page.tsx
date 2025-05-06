@@ -4,7 +4,7 @@ import type React from "react"
 
 import { signIn } from "next-auth/react"
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
@@ -13,6 +13,7 @@ export default function SignIn() {
   const [password, setPassword] = useState("")
   const [showEmailLogin, setShowEmailLogin] = useState(false)
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   useEffect(() => {
     // Check for error in URL
@@ -81,15 +82,19 @@ export default function SignIn() {
 
       if (result?.error) {
         setError("Email atau password salah")
+      } else if (result?.url) {
+        router.push(result.url)
       }
-
-      // Redirect akan ditangani oleh NextAuth
     } catch (err) {
       console.error("Sign-in error:", err)
       setError("Gagal sign in. Silakan coba lagi.")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleRegister = () => {
+    router.push("/register")
   }
 
   return (
@@ -188,6 +193,15 @@ export default function SignIn() {
                   className="text-sm text-primary hover:text-primary/90"
                 >
                   Sign in with email and password
+                </button>
+              </div>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={handleRegister}
+                  className="inline-block px-4 py-2 bg-white dark:bg-gray-800 text-primary rounded-md shadow hover:shadow-md transition-all"
+                >
+                  Belum punya akun? Register di sini
                 </button>
               </div>
             </>

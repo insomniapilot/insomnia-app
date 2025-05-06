@@ -18,11 +18,13 @@ export async function middleware(request: NextRequest) {
   // Get the pathname from the URL
   const path = request.nextUrl.pathname
 
-  // Skip middleware for not-found, error pages, and API routes (except auth)
+  // Skip middleware for not-found, error pages, API routes, register page, and static files
   if (
     path.startsWith("/_next") ||
     path === "/404" ||
     path === "/500" ||
+    path === "/register" ||
+    path.includes(".") ||
     (path.startsWith("/api") && !path.startsWith("/api/auth"))
   ) {
     return NextResponse.next()
