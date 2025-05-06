@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, type FormEvent, useRef } from "react"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/contexts/auth-context"
 import { createClientSupabaseClient } from "@/lib/supabase"
 import { ImageIcon, X } from "lucide-react"
 import Image from "next/image"
@@ -16,7 +16,7 @@ export default function CreatePostForm() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const supabase = createClientSupabaseClient()
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,7 +59,7 @@ export default function CreatePostForm() {
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop()
         const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`
-        const filePath = `${session?.user?.id}/${fileName}`
+        const filePath = `${user?.id}/${fileName}`
 
         const { error: uploadError, data } = await supabase.storage.from("post-images").upload(filePath, imageFile)
 
@@ -77,7 +77,7 @@ export default function CreatePostForm() {
 
       // Create post
       await supabase.from("posts").insert({
-        user_id: session?.user?.id,
+        user_id: user?.id,
         content: content.trim(),
         image_url: imageUrl,
       })

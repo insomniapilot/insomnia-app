@@ -2,8 +2,8 @@
 
 import { useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { createClientSupabaseClient } from "@/lib/supabase"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function Register() {
   const [fullName, setFullName] = useState("")
@@ -15,6 +15,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const { signUp } = useAuth()
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -48,71 +49,10 @@ export default function Register() {
     }
 
     try {
-      const supabase = createClientSupabaseClient()
-
-      // Cek apakah username sudah digunakan
-      const { data: existingUsername } = await supabase
-        .from("users")
-        .select("username")
-        .eq("username", username)
-        .maybeSingle()
-
-      if (existingUsername) {
-        setError("Username sudah digunakan")
-        setIsLoading(false)
-        return
-      }
-
-      // Cek apakah email sudah digunakan
-      const { data: existingEmail } = await supabase.from("users").select("email").eq("email", email).maybeSingle()
-
-      if (existingEmail) {
-        setError("Email sudah digunakan")
-        setIsLoading(false)
-        return
-      }
-
-      console.log("Creating user with email:", email)
-
-      // Buat user di Supabase Auth
-      const { data: authUser, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
-      })
-
-      if (authError) {
-        console.error("Auth error:", authError)
-        throw new Error(authError.message)
-      }
-
-      if (!authUser.user) {
-        throw new Error("Gagal membuat user")
-      }
-
-      console.log("Auth user created successfully, ID:", authUser.user.id)
-
-      // Buat user di tabel users
-      const { error: insertError } = await supabase.from("users").insert({
-        id: authUser.user.id,
-        email,
-        username,
-        full_name: fullName,
-      })
-
-      if (insertError) {
-        console.error("Insert error:", insertError)
-        throw new Error(insertError.message)
-      }
-
-      console.log("User record created successfully")
+      await signUp(email, password, username, fullName)
       setSuccess(true)
       setTimeout(() => {
-        router.push("/signin")
+        router.push("/signin?registered=true")
       }, 2000)
     } catch (err: any) {
       console.error("Registration error:", err)

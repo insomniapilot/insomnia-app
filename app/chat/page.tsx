@@ -1,6 +1,6 @@
 import Navbar from "@/components/navbar"
 import ChatInterface from "@/components/chat-interface"
-import { getServerSession } from "next-auth/next"
+import { createServerSupabaseClient } from "@/lib/supabase"
 import { redirect } from "next/navigation"
 
 // Disable static generation for this page
@@ -8,7 +8,11 @@ export const dynamic = "force-dynamic"
 
 export default async function ChatPage() {
   try {
-    const session = await getServerSession()
+    // Check if user is authenticated
+    const supabase = createServerSupabaseClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
     if (!session?.user) {
       redirect("/signin")

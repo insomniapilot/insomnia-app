@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import type { Post } from "@/types"
 import PostCard from "./post-card"
 import { createClientSupabaseClient } from "@/lib/supabase"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/contexts/auth-context"
 
 interface PostListProps {
   initialPosts: Post[]
@@ -14,7 +14,7 @@ interface PostListProps {
 export default function PostList({ initialPosts, username }: PostListProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts)
   const [isLoading, setIsLoading] = useState(false)
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const supabase = createClientSupabaseClient()
 
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function PostList({ initialPosts, username }: PostListProps) {
         <PostCard
           key={post.id}
           post={post}
-          currentUserId={session?.user?.id || ""}
+          currentUserId={user?.id || ""}
           onDelete={handleDeletePost}
           onLike={handleLikePost}
         />

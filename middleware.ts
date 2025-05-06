@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getToken } from "next-auth/jwt"
+import { createServerSupabaseClient } from "@/lib/supabase"
 
 export async function middleware(request: NextRequest) {
   // Untuk debugging
   console.log("Middleware running on path:", request.nextUrl.pathname)
-
-  // Coba dapatkan token
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  })
-
-  const isAuthenticated = !!token
-  console.log("Authentication status:", isAuthenticated ? "Authenticated" : "Not authenticated")
 
   // Get the pathname from the URL
   const path = request.nextUrl.pathname
@@ -24,31 +15,41 @@ export async function middleware(request: NextRequest) {
     path === "/404" ||
     path === "/500" ||
     path === "/register" ||
+    path === "/signin" ||
     path.includes(".") ||
-    (path.startsWith("/api") && !path.startsWith("/api/auth"))
+    path.startsWith("/api")
   ) {
     return NextResponse.next()
   }
 
-  // Redirect rules
-  if (!isAuthenticated && path !== "/signin" && !path.startsWith("/api/auth")) {
-    console.log("Redirecting unauthenticated user to signin")
+  try {
+    // Check if user is authenticated
+    const supabase = createServerSupabaseClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    const isAuthenticated = !!session
+    console.log("Authentication status:", isAuthenticated ? "Authenticated" : "Not authenticated")
+
+    // Redirect rules
+    if (!isAuthenticated && path !== "/signin" && path !== "/register") {
+      console.log("Redirecting unauthenticated user to signin")
+      return NextResponse.redirect(new URL("/signin", request.url))
+    }
+
+    // Redirect root to home for authenticated users
+    if (isAuthenticated && path === "/") {
+      console.log("Redirecting root to home")
+      return NextResponse.redirect(new URL("/home", request.url))
+    }
+
+    return NextResponse.next()
+  } catch (error) {
+    console.error("Middleware error:", error)
+    // In case of error, redirect to signin
     return NextResponse.redirect(new URL("/signin", request.url))
   }
-
-  // Redirect authenticated users from signin page to home
-  if (isAuthenticated && path === "/signin") {
-    console.log("Redirecting authenticated user to home")
-    return NextResponse.redirect(new URL("/home", request.url))
-  }
-
-  // Redirect root to home for authenticated users
-  if (isAuthenticated && path === "/") {
-    console.log("Redirecting root to home")
-    return NextResponse.redirect(new URL("/home", request.url))
-  }
-
-  return NextResponse.next()
 }
 
 // See "Matching Paths" below to learn more

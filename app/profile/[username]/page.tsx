@@ -1,5 +1,4 @@
 import { createServerSupabaseClient } from "@/lib/supabase"
-import { getServerSession } from "next-auth/next"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Navbar from "@/components/navbar"
@@ -78,7 +77,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     }
 
     const posts = await getUserPosts(profile.id)
-    const session = await getServerSession()
+
+    // Get current user session
+    const supabase = createServerSupabaseClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
     const isCurrentUser = session?.user?.id === profile.id
 
     return (

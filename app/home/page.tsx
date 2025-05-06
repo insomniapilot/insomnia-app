@@ -1,5 +1,4 @@
 import { createServerSupabaseClient } from "@/lib/supabase"
-import { getServerSession } from "next-auth/next"
 import PostList from "@/components/post-list"
 import CreatePostForm from "@/components/create-post-form"
 import Navbar from "@/components/navbar"
@@ -38,7 +37,6 @@ export default async function HomePage() {
 
   try {
     posts = await getPosts()
-    const session = await getServerSession()
 
     return (
       <>

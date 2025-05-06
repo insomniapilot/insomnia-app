@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClientSupabaseClient } from "@/lib/supabase"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/contexts/auth-context"
 import { Search } from "lucide-react"
 import UserCard from "./user-card"
 import type { User } from "@/types"
@@ -11,7 +11,7 @@ export default function SearchUsers() {
   const [searchQuery, setSearchQuery] = useState("")
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const supabase = createClientSupabaseClient()
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function SearchUsers() {
         if (error) throw error
 
         // Filter out current user
-        const filteredUsers = data.filter((user) => user.id !== session?.user?.id)
+        const filteredUsers = data.filter((u) => u.id !== user?.id)
         setUsers(filteredUsers as User[])
       } catch (error) {
         console.error("Error searching users:", error)
@@ -49,7 +49,7 @@ export default function SearchUsers() {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchQuery, supabase, session?.user?.id])
+  }, [searchQuery, supabase, user?.id])
 
   return (
     <div>
@@ -72,8 +72,8 @@ export default function SearchUsers() {
         </div>
       ) : users.length > 0 ? (
         <div className="space-y-4">
-          {users.map((user) => (
-            <UserCard key={user.id} user={user} currentUserId={session?.user?.id || ""} />
+          {users.map((u) => (
+            <UserCard key={u.id} user={u} currentUserId={user?.id || ""} />
           ))}
         </div>
       ) : searchQuery ? (

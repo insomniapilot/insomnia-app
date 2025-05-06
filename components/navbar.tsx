@@ -4,19 +4,18 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "@/contexts/theme-context"
 import { useAuth } from "@/contexts/auth-context"
-import { signOut } from "next-auth/react"
 import { Home, Search, MessageCircle, User, LogOut, Sun, Moon, Menu, X } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme()
-  const { session } = useAuth()
+  const { user, signOut } = useAuth()
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   // Skip navbar on signin and complete-profile pages
-  if (pathname === "/signin" || pathname === "/complete-profile") {
+  if (pathname === "/signin" || pathname === "/register" || pathname === "/complete-profile") {
     return null
   }
 
@@ -76,14 +75,14 @@ export default function Navbar() {
               <MessageCircle className="h-6 w-6" />
             </Link>
             <Link
-              href={`/profile/${session?.user?.username || ""}`}
+              href={`/profile/${user?.username || ""}`}
               className={`p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 ${
                 pathname.startsWith("/profile") ? "text-primary" : "text-gray-600 dark:text-gray-300"
               }`}
             >
-              {session?.user?.image ? (
+              {user?.avatar_url ? (
                 <div className="relative w-6 h-6 rounded-full overflow-hidden">
-                  <Image src={session.user.image || "/placeholder.svg"} alt="Profile" fill className="object-cover" />
+                  <Image src={user.avatar_url || "/placeholder.svg"} alt="Profile" fill className="object-cover" />
                 </div>
               ) : (
                 <User className="h-6 w-6" />
@@ -96,7 +95,7 @@ export default function Navbar() {
               {theme === "dark" ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
             </button>
             <button
-              onClick={() => signOut({ callbackUrl: "/signin" })}
+              onClick={() => signOut()}
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
             >
               <LogOut className="h-6 w-6" />
@@ -172,7 +171,7 @@ export default function Navbar() {
               </div>
             </Link>
             <Link
-              href={`/profile/${session?.user?.username || ""}`}
+              href={`/profile/${user?.username || ""}`}
               className={`block px-3 py-2 rounded-md ${
                 pathname.startsWith("/profile")
                   ? "bg-primary text-white"
@@ -198,7 +197,7 @@ export default function Navbar() {
               </div>
             </button>
             <button
-              onClick={() => signOut({ callbackUrl: "/signin" })}
+              onClick={() => signOut()}
               className="w-full text-left block px-3 py-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
               <div className="flex items-center">
