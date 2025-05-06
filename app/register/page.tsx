@@ -72,6 +72,8 @@ export default function Register() {
         return
       }
 
+      console.log("Creating user with email:", email)
+
       // Buat user di Supabase Auth
       const { data: authUser, error: authError } = await supabase.auth.signUp({
         email,
@@ -84,12 +86,15 @@ export default function Register() {
       })
 
       if (authError) {
+        console.error("Auth error:", authError)
         throw new Error(authError.message)
       }
 
       if (!authUser.user) {
         throw new Error("Gagal membuat user")
       }
+
+      console.log("Auth user created successfully, ID:", authUser.user.id)
 
       // Buat user di tabel users
       const { error: insertError } = await supabase.from("users").insert({
@@ -100,9 +105,11 @@ export default function Register() {
       })
 
       if (insertError) {
+        console.error("Insert error:", insertError)
         throw new Error(insertError.message)
       }
 
+      console.log("User record created successfully")
       setSuccess(true)
       setTimeout(() => {
         router.push("/signin")

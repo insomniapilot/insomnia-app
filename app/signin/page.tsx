@@ -11,7 +11,7 @@ export default function SignIn() {
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showEmailLogin, setShowEmailLogin] = useState(false)
+  const [showEmailLogin, setShowEmailLogin] = useState(true) // Set to true to show email login by default
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -36,6 +36,9 @@ export default function SignIn() {
           setError(
             "Akses ditolak. Pastikan Anda mengizinkan aplikasi untuk mengakses data Google Anda atau coba dengan akun Google lain.",
           )
+          break
+        case "Credentials":
+          setError("Email atau password salah. Silakan coba lagi.")
           break
         default:
           setError(`Error autentikasi: ${errorMessage}`)
@@ -72,18 +75,20 @@ export default function SignIn() {
     try {
       setIsLoading(true)
       setError(null)
+      console.log("Attempting to sign in with email:", email)
 
       const result = await signIn("credentials", {
         email,
         password,
-        callbackUrl: "/home",
         redirect: false,
       })
+
+      console.log("Sign in result:", result)
 
       if (result?.error) {
         setError("Email atau password salah")
       } else if (result?.url) {
-        router.push(result.url)
+        router.push("/home")
       }
     } catch (err) {
       console.error("Sign-in error:", err)
@@ -162,7 +167,7 @@ export default function SignIn() {
                   onClick={() => setShowEmailLogin(false)}
                   className="text-sm text-primary hover:text-primary/90"
                 >
-                  Kembali ke opsi login
+                  Sign in with Google
                 </button>
               </div>
             </form>
@@ -195,17 +200,17 @@ export default function SignIn() {
                   Sign in with email and password
                 </button>
               </div>
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={handleRegister}
-                  className="inline-block px-4 py-2 bg-white dark:bg-gray-800 text-primary rounded-md shadow hover:shadow-md transition-all"
-                >
-                  Belum punya akun? Register di sini
-                </button>
-              </div>
             </>
           )}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={handleRegister}
+              className="inline-block px-4 py-2 bg-white dark:bg-gray-800 text-primary rounded-md shadow hover:shadow-md transition-all"
+            >
+              Belum punya akun? Register di sini
+            </button>
+          </div>
         </div>
       </div>
     </div>

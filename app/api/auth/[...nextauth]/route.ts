@@ -22,34 +22,46 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log("Missing credentials")
           return null
         }
 
         try {
           const supabase = createServerSupabaseClient()
 
-          // Find user by email
-          const { data: userData, error: userError } = await supabase
-            .from("users")
-            .select("*")
-            .eq("email", credentials.email)
-            .single()
+          console.log("Attempting to sign in with:", credentials.email)
 
-          if (userError || !userData) {
-            console.error("User not found:", userError)
-            return null
-          }
-
-          // Get auth user to verify password
+          // Sign in with Supabase Auth
           const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
             email: credentials.email,
             password: credentials.password,
           })
 
-          if (authError || !authData.user) {
+          if (authError) {
             console.error("Auth error:", authError)
             return null
           }
+
+          if (!authData.user) {
+            console.error("No user returned from auth")
+            return null
+          }
+
+          console.log("Auth successful, user ID:", authData.user.id)
+
+          // Get user data from database
+          const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("*")
+            .eq("id", authData.user.id)
+            .single()
+
+          if (userError) {
+            console.error("User data error:", userError)
+            return null
+          }
+
+          console.log("User data retrieved successfully")
 
           return {
             id: userData.id,
