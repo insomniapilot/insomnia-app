@@ -17,22 +17,22 @@ const handler = NextAuth({
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password) {
           return null
         }
 
         try {
           const supabase = createServerSupabaseClient()
 
-          // Find user by username
+          // Find user by email
           const { data: userData, error: userError } = await supabase
             .from("users")
             .select("*")
-            .eq("username", credentials.username)
+            .eq("email", credentials.email)
             .single()
 
           if (userError || !userData) {
@@ -42,7 +42,7 @@ const handler = NextAuth({
 
           // Get auth user to verify password
           const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-            email: userData.email,
+            email: credentials.email,
             password: credentials.password,
           })
 
